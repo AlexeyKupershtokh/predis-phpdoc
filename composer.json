@@ -1,0 +1,11 @@
+{
+    "require": {
+        "predis/predis": "*",
+        "ukko/phpredis-phpdoc": "2.2.*@dev"
+    },
+    "autoload": {
+        "psr-0": {
+            "PredisPhpdoc": "src/"
+        }
+    }
+}
