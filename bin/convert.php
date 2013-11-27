@@ -13,12 +13,13 @@ file_put_contents(__DIR__ . '/../src/PredisPhpdoc/Redis.php', $file);
 // lowercase all commands
 $class = new ReflectionClass('\PredisPhpdoc\Redis');
 $methods = $class->getMethods();
-var_dump($methods);
-var_dump($class->getFileName());
 $file = file_get_contents($class->getFileName());
-usort($methods, function ($a, $b) {
-    return $a < $b;
-});
+usort(
+    $methods,
+    function ($a, $b) {
+        return $a < $b;
+    }
+);
 foreach ($methods as $method) {
     $name = $method->getName();
     $lc = strtolower($name);
@@ -28,7 +29,7 @@ foreach ($methods as $method) {
     $file = str_replace($name, $lc, $file);
 }
 $file = str_replace("class Redis", "class RedisLC", $file);
-$file = str_replace("class RedisLC\n", "class RedisLC extends ClientStatic\n", $file);
+//$file = str_replace("class RedisLC\n", "class RedisLC extends ClientStatic\n", $file);
 file_put_contents(__DIR__ . '/../src/PredisPhpdoc/RedisLC.php', $file);
 
 // load RedisLC and copy compatible commands to Client class
@@ -45,18 +46,17 @@ class Client extends ClientStatic
 {
 
 F;
-$supportedCommands = $profile->getSupportedCommands();
-$unusedCommands = $supportedCommands;
-unset($unusedCommands['echo'], $unusedCommands['eval']);
 foreach ($class->getMethods() as $method) {
-    if (isset($supportedCommands[$method->getName()])) {
+    if ($profile->supportsCommand($method->getName())) {
         $file .= "    " . $method->getDocComment() . PHP_EOL;
-        $code = join(PHP_EOL, array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1));
+        $code = join(
+            PHP_EOL,
+            array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1)
+        );
         $code = str_replace(' {}', PHP_EOL . '    {' . PHP_EOL . '    }', $code);
         $code = str_replace('( ', '(', $code);
         $code = str_replace(' )', ')', $code);
         $file .= $code . PHP_EOL;
-        unset($unusedCommands[$method->getName()]);
     }
 }
 $file .= <<<F
@@ -64,6 +64,16 @@ $file .= <<<F
 
 F;
 file_put_contents(__DIR__ . '/../src/PredisPhpdoc/Client.php', $file);
+
+// load Filtered class in order to check for missing commands
+$class = new ReflectionClass('\PredisPhpdoc\Client');
+$methods = $class->getMethods();
+$unusedCommands = array_diff_key(
+    $profile->getSupportedCommands(),
+    array_flip(array_map(function ($m) { return $m->getName();}, $methods)),
+    array('echo' => 1, 'eval' => 1)
+);
+unset($unusedCommands['echo'], $unusedCommands['eval']);
 
 print 'Missing commands in ukko/phpredis-phpdoc:' . PHP_EOL;
 var_export($unusedCommands);

@@ -34,7 +34,7 @@ use Predis\Client as PredisClient;
  * </pre>
  *
  */
-class ClientStatic
+class ClientStatic extends PredisClient
 {
     /**
      * Set the string value in argument as value of the key, with a time to live.
@@ -52,31 +52,73 @@ class ClientStatic
     {
     }
 
-    public function quit()
+    /**
+     * This command is used in order to read and reset the Redis slow queries log.
+     *
+     * @param string $subcommand "get"|"reset"|"len"
+     * @param string $argument
+     * @return array|null
+     * @link http://redis.io/commands/slowlog
+     */
+    public function slowlog($subcommand, $argument = null)
     {
     }
 
-    public function slowlog()
+    /**
+     * The command behavior is the following:
+     *  - Stop all the clients.
+     *  - Perform a blocking SAVE if at least one save point is configured.
+     *  - Flush the Append Only File if AOF is enabled.
+     *  - Quit the server.
+     * If persistence is enabled this commands makes sure that Redis is switched off without the lost of any data.
+     * This is not guaranteed if the client uses simply SAVE and then QUIT because other clients may alter the DB data
+     * between the two commands.
+     *
+     * @param string $save "SAVE"|"NOSAVE" [optional]
+     * @return null
+     * @link http://redis.io/commands/shutdown
+     */
+    public function shutdown($save = null)
     {
     }
 
-    public function shutdown()
+    /**
+     * Unsubscribes the client from the given channels, or from all of them if none is given.
+     * When no channels are specified, the client is unsubscribed from all the previously subscribed channels.
+     * In this case, a message for every unsubscribed channel will be sent to the client.
+     *
+     * @param string $channel,... [optional]
+     * @return null
+     * @link http://redis.io/commands/unsubscribe
+     */
+    public function unsubscribe($channel = null)
     {
     }
 
-    public function monitor()
+    /**
+     * Unsubscribes the client from the given patterns, or from all of them if none is given.
+     * When no patters are specified, the client is unsubscribed from all the previously subscribed patterns.
+     * In this case, a message for every unsubscribed pattern will be sent to the client.
+     *
+     * @param string $pattern,... [optional]
+     * @return null
+     * @link http://redis.io/commands/punsubscribe
+     */
+    public function punsubscribe($pattern = null)
     {
     }
 
-    public function unsubscribe()
-    {
-    }
-
-    public function punsubscribe()
-    {
-    }
-
-    public function client()
+    /**
+     * Client command with a few subcommands.
+     *
+     * @param string $subcommand
+     * @param string $arg [optional]
+     * @link http://redis.io/commands/client-kill
+     * @link http://redis.io/commands/client-list
+     * @link http://redis.io/commands/client-getname
+     * @link http://redis.io/commands/client-setname
+     */
+    public function client($subcommand, $arg = null)
     {
     }
 }

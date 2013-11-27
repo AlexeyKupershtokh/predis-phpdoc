@@ -31,7 +31,7 @@ namespace PredisPhpdoc;
  * </pre>
  *
  */
-class RedisLC extends ClientStatic
+class RedisLC
 {
     const AFTER                 = '';
     const BEFORE                = '';
