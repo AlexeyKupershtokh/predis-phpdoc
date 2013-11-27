@@ -5,6 +5,8 @@
     "license": "MIT",
     "require": {
         "predis/predis": "*",
+    },
+    "require-dev": {
         "ukko/phpredis-phpdoc": "2.2.*@dev"
     },
     "autoload": {
