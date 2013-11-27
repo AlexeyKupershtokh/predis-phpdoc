@@ -4,7 +4,7 @@
     "keywords": ["redis", "predis", "helper", "autocompletion"],
     "license": "MIT",
     "require": {
-        "predis/predis": "*",
+        "predis/predis": "*"
     },
     "require-dev": {
         "ukko/phpredis-phpdoc": "2.2.*@dev"
