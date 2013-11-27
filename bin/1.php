@@ -10,8 +10,7 @@ $file = str_replace('<?php', '<?php' . PHP_EOL . 'namespace PredisPhpdoc;' . PHP
 $file = str_replace('class RedisException extends Exception {}', '', $file);
 file_put_contents(__DIR__ . '/../src/PredisPhpdoc/Redis.php', $file);
 
-new \PredisPhpdoc\Redis();
-
+// lowercase all commands
 $class = new ReflectionClass('\PredisPhpdoc\Redis');
 $methods = $class->getMethods();
 var_dump($methods);
@@ -25,4 +24,7 @@ foreach ($methods as $method) {
     $name = $method->getName();
     $file = str_replace($name, strtolower($name), $file);
 }
-file_put_contents(__DIR__ . '/../src/PredisPhpdoc/ClientLC.php', $file);
+$file = str_replace('class Redis', 'class RedisLC', $file);
+file_put_contents(__DIR__ . '/../src/PredisPhpdoc/RedisLC.php', $file);
+
+// load RedisLC
