@@ -1,8 +1,13 @@
 {
+    "name": "alexey-kupershtokh/predis-phpdoc",
+    "description": "IDE autocompletion for Predis",
+    "keywords": ["redis", "predis", "helper", "autocompletion"],
+    "license": "MIT",
     "require": {
         "predis/predis": "*",
         "ukko/phpredis-phpdoc": "2.2.*@dev"
     },
+    "version": "0.0.1",
     "autoload": {
         "psr-0": {
             "PredisPhpdoc": "src/"
