@@ -42,7 +42,7 @@ namespace PredisPhpdoc;
 
 use Predis\Client as PredisClient;
 
-class Client extends ClientStatic
+class ClientDynamic extends PredisClient
 {
 
 F;
@@ -63,7 +63,7 @@ $file .= <<<F
 }
 
 F;
-file_put_contents(__DIR__ . '/../src/PredisPhpdoc/Client.php', $file);
+file_put_contents(__DIR__ . '/../src/PredisPhpdoc/ClientDynamic.php', $file);
 
 // load Filtered class in order to check for missing commands
 $class = new ReflectionClass('\PredisPhpdoc\Client');
