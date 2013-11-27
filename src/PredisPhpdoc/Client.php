@@ -1,177 +1,20 @@
 <?php
+
 namespace PredisPhpdoc;
 
-/**
- * Helper autocomplete for php redis extension
- * @author Max Kamashev <max.kamashev@gmail.com>
- * @link https://github.com/ukko/phpredis-phpdoc
- *
- * @method echo string $string Sends a string to Redis, which replies with the same string
- *
- * @method  eval( $script, $args = array(), $numKeys = 0 )
- *  Evaluate a LUA script serverside
- *  @param  string  $script
- *  @param  array   $args
- *  @param  int     $numKeys
- *  @return Mixed.  What is returned depends on what the LUA script itself returns, which could be a scalar value
- *  (int/string), or an array. Arrays that are returned can also contain other arrays, if that's how it was set up in
- *  your LUA script.  If there is an error executing the LUA script, the getlasterror() function can tell you the
- *  message that came back from Redis (e.g. compile error).
- *  @link   http://redis.io/commands/eval
- *  @example
- *  <pre>
- *  $redis->eval("return 1"); // Returns an integer: 1
- *  $redis->eval("return {1,2,3}"); // Returns Array(1,2,3)
- *  $redis->del('mylist');
- *  $redis->rpush('mylist','a');
- *  $redis->rpush('mylist','b');
- *  $redis->rpush('mylist','c');
- *  // Nested response:  Array(1,2,3,Array('a','b','c'));
- *  $redis->eval("return {1,2,3,redis.call('lrange','mylist',0,-1)}}");
- * </pre>
- *
- */
-class RedisLC extends ClientStatic
+use Predis\Client as PredisClient;
+
+class Client extends ClientStatic
 {
-    const AFTER                 = '';
-    const BEFORE                = '';
-
-    /**
-     * Options
-     */
-    const OPT_SERIALIZER        = 1;
-    const OPT_PREFIX            = 2;
-
-    /**
-     * Serializers
-     */
-    const SERIALIZER_NONE       = 0;
-    const SERIALIZER_PHP        = 1;
-    const SERIALIZER_IGBINARY   = 2;
-
-    /**
-     * Multi
-     */
-    const MULTI                 = '';
-    const PIPELINE              = '';
-
-    /**
-     * Type
-     */
-    const REDIS_NOT_FOUND       = 0;
-    const REDIS_STRING          = 1;
-    const REDIS_SET             = 2;
-    const REDIS_LIST            = 3;
-    const REDIS_ZSET            = 4;
-    const REDIS_HASH            = 5;
-
-
-    /**
-     * Creates a Redis client
-     *
-     * @example $redis = new Redis();
-     */
-    public function __construct( ) {}
-
-    /**
-     * Connects to a Redis instance.
-     *
-     * @param string    $host       can be a host, or the path to a unix domain socket
-     * @param int       $port       optional
-     * @param float     $timeout    value in seconds (optional, default is 0.0 meaning unlimited)
-     * @return bool                 TRUE on success, FALSE on error.
-     * @example
-     * <pre>
-     * $redis->connect('127.0.0.1', 6379);
-     * $redis->connect('127.0.0.1');            // port 6379 by default
-     * $redis->connect('127.0.0.1', 6379, 2.5); // 2.5 sec timeout.
-     * $redis->connect('/tmp/redis.sock');      // unix domain socket.
-     * </pre>
-     */
-    public function connect( $host, $port = 6379, $timeout = 0.0 ) {}
-
-    /**
-     * @see connect()
-     * @param string    $host
-     * @param int       $port
-     * @param float     $timeout
-     */
-    public function open( $host, $port = 6379, $timeout = 0.0 ) {}
-
-    /**
-     * Connects to a Redis instance or reuse a connection already established with pconnect/popen.
-     *
-     * The connection will not be closed on close or end of request until the php process ends.
-     * So be patient on to many open FD's (specially on redis server side) when using persistent connections on
-     * many servers connecting to one redis server.
-     *
-     * Also more than one persistent connection can be made identified by either host + port + timeout
-     * or unix socket + timeout.
-     *
-     * This feature is not available in threaded versions. pconnect and popen then working like their non persistent
-     * equivalents.
-     *
-     * @param string    $host       can be a host, or the path to a unix domain socket
-     * @param int       $port       optional
-     * @param float     $timeout    value in seconds (optional, default is 0 meaning unlimited)
-     * @return bool                 TRUE on success, FALSE on error.
-     * @example
-     * <pre>
-     * $redis->connect('127.0.0.1', 6379);
-     * $redis->connect('127.0.0.1');            // port 6379 by default
-     * $redis->connect('127.0.0.1', 6379, 2.5); // 2.5 sec timeout.
-     * $redis->connect('/tmp/redis.sock');      // unix domain socket.
-     * </pre>
-     */
-    public function pconnect( $host, $port = 6379, $timeout = 0.0 ) {}
-
-    /**
-     * @see pconnect()
-     * @param string    $host
-     * @param int       $port
-     * @param float     $timeout
-     */
-    public function popen( $host, $port = 6379, $timeout = 0.0 ) {}
-
-    /**
-     * Disconnects from the Redis instance, except when pconnect is used.
-     */
-    public function close( ) {}
-
-    /**
-     * Set client option.
-     *
-     * @param   string  $name    parameter name
-     * @param   string  $value   parameter value
-     * @return  bool:   TRUE on success, FALSE on error.
-     * @example
-     * <pre>
-     * $redis->setoption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_NONE);        // don't serialize data
-     * $redis->setoption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);         // use built-in serialize/unserialize
-     * $redis->setoption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_IGBINARY);    // use igBinary serialize/unserialize
-     * $redis->setoption(Redis::OPT_PREFIX, 'myAppName:');                      // use custom prefix on all keys
-     * </pre>
-     */
-    public function setoption( $name, $value ) {}
-
-    /**
-     * Get client option
-     *
-     * @param   string  $name parameter name
-     * @return  int     Parameter value.
-     * @example
-     * // return Redis::SERIALIZER_NONE, Redis::SERIALIZER_PHP, or Redis::SERIALIZER_IGBINARY.
-     * $redis->getoption(Redis::OPT_SERIALIZER);
-     */
-    public function getoption( $name ) {}
-
     /**
      * Check the current connection status
      *
      * @return  string STRING: +PONG on success. Throws a RedisException object on connectivity error, as described above.
      * @link    http://redis.io/commands/ping
      */
-    public function ping( ) {}
+    public function ping()
+    {
+    }
 
     /**
      * Get the value related to the specified key
@@ -181,8 +24,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/get
      * @example $redis->get('key');
      */
-    public function get( $key ) {}
-
+    public function get($key)
+    {
+    }
 
     /**
      * Set the string value in argument as value of the key.
@@ -194,7 +38,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/set
      * @example $redis->set('key', 'value');
      */
-    public function set( $key, $value, $ttl = 0 ) {}
+    public function set($key, $value, $ttl = 0)
+    {
+    }
 
     /**
      * Set the string value in argument as value of the key, with a time to live.
@@ -206,7 +52,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/setex
      * @example $redis->setex('key', 3600, 'value'); // sets key → value, with 1h TTL.
      */
-    public function setex( $key, $ttl, $value ) {}
+    public function setex($key, $ttl, $value)
+    {
+    }
 
     /**
      * Set the string value in argument as value of the key if the key doesn't already exist in the database.
@@ -221,7 +69,9 @@ class RedisLC extends ClientStatic
      * $redis->setnx('key', 'value');   // return FALSE
      * </pre>
      */
-    public function setnx( $key, $value ) {}
+    public function setnx($key, $value)
+    {
+    }
 
     /**
      * Remove specified keys.
@@ -241,15 +91,9 @@ class RedisLC extends ClientStatic
      * $redis->delete(array('key3', 'key4'));   // return 2
      * </pre>
      */
-    public function del( $key1, $key2 = null, $key3 = null ) {}
-
-    /**
-     * @see del()
-     * @param $key1
-     * @param null $key2
-     * @param null $key3
-     */
-    public function delete( $key1, $key2 = null, $key3 = null ) {}
+    public function del($key1, $key2 = null, $key3 = null)
+    {
+    }
 
     /**
      * Enter and exit transactional mode.
@@ -278,19 +122,25 @@ class RedisLC extends ClientStatic
      * //    3 => 'val2');
      * </pre>
      */
-    public function multi( ) {}
+    public function multi()
+    {
+    }
 
     /**
      * @see multi()
      * @link    http://redis.io/commands/exec
      */
-    public function exec( ) {}
+    public function exec()
+    {
+    }
 
     /**
      * @see multi()
      * @link    http://redis.io/commands/discard
      */
-    public function discard( ) {}
+    public function discard()
+    {
+    }
 
     /**
      * Watches a key for modifications by another client. If the key is modified between WATCH and EXEC,
@@ -308,13 +158,17 @@ class RedisLC extends ClientStatic
      * // $ret = FALSE if x has been modified between the call to WATCH and the call to EXEC.
      * </pre>
      */
-    public function watch( $key ) {}
+    public function watch($key)
+    {
+    }
 
     /**
      * @see watch()
      * @link    http://redis.io/commands/unwatch
      */
-    public function unwatch( ) {}
+    public function unwatch()
+    {
+    }
 
     /**
      * Subscribe to channels. Warning: this function will probably change in the future.
@@ -344,7 +198,9 @@ class RedisLC extends ClientStatic
      * $redis->subscribe(array('chan-1', 'chan-2', 'chan-3'), 'f'); // subscribe to 3 chans
      * </pre>
      */
-    public function subscribe( $channels, $callback ) {}
+    public function subscribe($channels, $callback)
+    {
+    }
 
     /**
      * Subscribe to channels by pattern
@@ -362,7 +218,9 @@ class RedisLC extends ClientStatic
      * }
      * </pre>
      */
-    public function psubscribe( $patterns, $callback ) {}
+    public function psubscribe($patterns, $callback)
+    {
+    }
 
     /**
      * Publish messages to channels. Warning: this function will probably change in the future.
@@ -373,7 +231,9 @@ class RedisLC extends ClientStatic
      * @return  int Number of clients that received the message
      * @example $redis->publish('chan-1', 'hello, world!'); // send message.
      */
-    public function publish( $channel, $message ) {}
+    public function publish($channel, $message)
+    {
+    }
 
     /**
      * Verify if the specified key exists.
@@ -388,7 +248,9 @@ class RedisLC extends ClientStatic
      * $redis->exists('NonExistingKey');    // FALSE
      * </pre>
      */
-    public function exists( $key ) {}
+    public function exists($key)
+    {
+    }
 
     /**
      * Increment the number stored at key by one.
@@ -404,7 +266,9 @@ class RedisLC extends ClientStatic
      * $redis->incr('key1'); // 4
      * </pre>
      */
-    public function incr( $key ) {}
+    public function incr($key)
+    {
+    }
 
     /**
      * Increment the float value of a key by the given amount
@@ -424,7 +288,9 @@ class RedisLC extends ClientStatic
      * var_dump( $redis->get('x') );                // string(3) "4.5"
      * </pre>
      */
-    public function incrbyfloat( $key, $increment ) {}
+    public function incrbyfloat($key, $increment)
+    {
+    }
 
     /**
      * Increment the number stored at key by one. If the second argument is filled, it will be used as the integer
@@ -443,7 +309,9 @@ class RedisLC extends ClientStatic
      * $redis->incrby('key1', 10);  // 14
      * </pre>
      */
-    public function incrby( $key, $value ) {}
+    public function incrby($key, $value)
+    {
+    }
 
     /**
      * Decrement the number stored at key by one.
@@ -458,7 +326,9 @@ class RedisLC extends ClientStatic
      * $redis->decr('key1'); // -3
      * </pre>
      */
-    public function decr( $key ) {}
+    public function decr($key)
+    {
+    }
 
     /**
      * Decrement the number stored at key by one. If the second argument is filled, it will be used as the integer
@@ -476,24 +346,9 @@ class RedisLC extends ClientStatic
      * $redis->decrby('key1', 10);  // -13
      * </pre>
      */
-    public function decrby( $key, $value ) {}
-
-    /**
-     * Get the values of all the specified keys. If one or more keys dont exist, the array will contain FALSE at the
-     * position of the key.
-     *
-     * @param   array $keys Array containing the list of the keys
-     * @return  array Array containing the values related to keys in argument
-     * @example
-     * <pre>
-     * $redis->set('key1', 'value1');
-     * $redis->set('key2', 'value2');
-     * $redis->set('key3', 'value3');
-     * $redis->getmultiple(array('key1', 'key2', 'key3')); // array('value1', 'value2', 'value3');
-     * $redis->getmultiple(array('key0', 'key1', 'key5')); // array(`FALSE`, 'value2', `FALSE`);
-     * </pre>
-     */
-    public function getmultiple( array $keys ) {}
+    public function decrby($key, $value)
+    {
+    }
 
     /**
      * Adds the string values to the head (left) of the list. Creates the list if the key didn't exist.
@@ -518,7 +373,9 @@ class RedisLC extends ClientStatic
      * // }
      * </pre>
      */
-    public function lpush( $key, $value1, $value2 = null, $valueN = null ) {}
+    public function lpush($key, $value1, $value2 = null, $valueN = null)
+    {
+    }
 
     /**
      * Adds the string values to the tail (right) of the list. Creates the list if the key didn't exist.
@@ -543,7 +400,9 @@ class RedisLC extends ClientStatic
      * // }
      * </pre>
      */
-    public function rpush( $key, $value1, $value2 = null, $valueN = null ) {}
+    public function rpush($key, $value1, $value2 = null, $valueN = null)
+    {
+    }
 
     /**
      * Adds the string value to the head (left) of the list if the list exists.
@@ -562,7 +421,9 @@ class RedisLC extends ClientStatic
      * // key1 now points to the following list: [ 'A', 'B', 'C' ]
      * </pre>
      */
-    public function lpushx( $key, $value ) {}
+    public function lpushx($key, $value)
+    {
+    }
 
     /**
      * Adds the string value to the tail (right) of the list if the ist exists. FALSE in case of Failure.
@@ -581,7 +442,9 @@ class RedisLC extends ClientStatic
      * // key1 now points to the following list: [ 'A', 'B', 'C' ]
      * </pre>
      */
-    public function rpushx( $key, $value ) {}
+    public function rpushx($key, $value)
+    {
+    }
 
     /**
      * Returns and removes the first element of the list.
@@ -597,7 +460,9 @@ class RedisLC extends ClientStatic
      * $redis->lpop('key1');        // key1 => [ 'B', 'C' ]
      * </pre>
      */
-    public function lpop( $key ) {}
+    public function lpop($key)
+    {
+    }
 
     /**
      * Returns and removes the last element of the list.
@@ -613,7 +478,9 @@ class RedisLC extends ClientStatic
      * $redis->rpop('key1');        // key1 => [ 'A', 'B' ]
      * </pre>
      */
-    public function rpop( $key ) {}
+    public function rpop($key)
+    {
+    }
 
     /**
      * Is a blocking lpop primitive. If at least one of the lists contains at least one element,
@@ -653,7 +520,9 @@ class RedisLC extends ClientStatic
      * // array('key1', 'A') is returned
      * </pre>
      */
-    public function blpop( array $keys ) {}
+    public function blpop(array $keys)
+    {
+    }
 
     /**
      * Is a blocking rpop primitive. If at least one of the lists contains at least one element,
@@ -694,8 +563,9 @@ class RedisLC extends ClientStatic
      * // array('key1', 'A') is returned
      * </pre>
      */
-    public function brpop( array $keys ) {}
-
+    public function brpop(array $keys)
+    {
+    }
 
     /**
      * Returns the size of a list identified by Key. If the list didn't exist or is empty,
@@ -715,16 +585,9 @@ class RedisLC extends ClientStatic
      * $redis->llen('key1');       // 2
      * </pre>
      */
-    public function llen( $key ) {}
-
-    /**
-     * @see     llen()
-     * @param   string    $key
-     * @param   int       $index
-     * @link    http://redis.io/commands/llen
-     */
-    public function lsize( $key ) {}
-
+    public function llen($key)
+    {
+    }
 
     /**
      * Return the specified element of the list stored at the specified key.
@@ -745,16 +608,9 @@ class RedisLC extends ClientStatic
      * $redis->lget('key1', 10);    // `FALSE`
      * </pre>
      */
-    public function lindex( $key, $index ) {}
-
-    /**
-     * @see lindex()
-     * @param   string    $key
-     * @param   int       $index
-     * @link    http://redis.io/commands/lindex
-     */
-    public function lget( $key, $index ) {}
-
+    public function lindex($key, $index)
+    {
+    }
 
     /**
      * Set the list at index with the new value.
@@ -775,8 +631,9 @@ class RedisLC extends ClientStatic
      * $redis->lget('key1', 0);     // 'X'
      * </pre>
      */
-    public function lset( $key, $index, $value ) {}
-
+    public function lset($key, $index, $value)
+    {
+    }
 
     /**
      * Returns the specified elements of the list stored at the specified key in
@@ -795,17 +652,9 @@ class RedisLC extends ClientStatic
      * $redis->lrange('key1', 0, -1); // array('A', 'B', 'C')
      * </pre>
      */
-    public function lrange( $key, $start, $end ) {}
-
-    /**
-     * @see lrange()
-     * @link http://redis.io/commands/lrange
-     * @param string    $key
-     * @param int       $start
-     * @param int       $end
-     */
-    public function lgetrange( $key, $start, $end ) {}
-
+    public function lrange($key, $start, $end)
+    {
+    }
 
     /**
      * Trims an existing list so that it will contain only a specified range of elements.
@@ -825,17 +674,9 @@ class RedisLC extends ClientStatic
      * $redis->lrange('key1', 0, -1); // array('A', 'B')
      * </pre>
      */
-    public function ltrim( $key, $start, $stop ) {}
-
-    /**
-     * @see ltrim()
-     * @link  http://redis.io/commands/ltrim
-     * @param string    $key
-     * @param int       $start
-     * @param int       $stop
-     */
-    public function listtrim( $key, $start, $stop ) {}
-
+    public function ltrim($key, $start, $stop)
+    {
+    }
 
     /**
      * Removes the first count occurences of the value element from the list.
@@ -861,17 +702,9 @@ class RedisLC extends ClientStatic
      * $redis->lrange('key1', 0, -1);   // array('C', 'B', 'A')
      * </pre>
      */
-    public function lrem( $key, $value, $count ) {}
-
-    /**
-     * @see lrem
-     * @link    http://redis.io/commands/lremove
-     * @param string    $key
-     * @param string    $value
-     * @param int       $count
-     */
-    public function lremove( $key, $value, $count ) {}
-
+    public function lrem($key, $value, $count)
+    {
+    }
 
     /**
      * Insert value in the list before or after the pivot value. the parameter options
@@ -902,8 +735,9 @@ class RedisLC extends ClientStatic
      * $redis->linsert('key1', Redis::AFTER, 'W', 'value'); // -1
      * </pre>
      */
-    public function linsert( $key, $position, $pivot, $value ) {}
-
+    public function linsert($key, $position, $pivot, $value)
+    {
+    }
 
     /**
      * Adds a values to the set value stored at key.
@@ -921,8 +755,9 @@ class RedisLC extends ClientStatic
      * $redis->sadd('k', 'v1', 'v2', 'v3');    // int(2)
      * </pre>
      */
-    public function sadd( $key, $value1, $value2 = null, $valueN = null ) {}
-
+    public function sadd($key, $value1, $value2 = null, $valueN = null)
+    {
+    }
 
     /**
      * Removes the specified members from the set value stored at key.
@@ -944,18 +779,9 @@ class RedisLC extends ClientStatic
      * // }
      * </pre>
      */
-    public function srem( $key, $member1, $member2 = null, $memberN = null ) {}
-
-    /**
-     * @see srem()
-     * @link    http://redis.io/commands/srem
-     * @param   string  $key
-     * @param   string  $member1
-     * @param   string  $member2
-     * @param   string  $memberN
-     */
-    public function sremove( $key, $member1, $member2 = null, $memberN = null ) {}
-
+    public function srem($key, $member1, $member2 = null, $memberN = null)
+    {
+    }
 
     /**
      * Moves the specified member from the set at srcKey to the set at dstKey.
@@ -977,8 +803,9 @@ class RedisLC extends ClientStatic
      *                                          // 'key2' =>  {'set21', 'set22', 'set13'}
      * </pre>
      */
-    public function smove( $srcKey, $dstKey, $member ) {}
-
+    public function smove($srcKey, $dstKey, $member)
+    {
+    }
 
     /**
      * Checks if value is a member of the set stored at the key key.
@@ -997,15 +824,9 @@ class RedisLC extends ClientStatic
      * $redis->sismember('key1', 'setX'); // FALSE
      * </pre>
      */
-    public function sismember( $key, $value ) {}
-
-    /**
-     * @see sismember()
-     * @link    http://redis.io/commands/sismember
-     * @param   string  $key
-     * @param   string  $value
-     */
-    public function scontains( $key, $value ) {}
+    public function sismember($key, $value)
+    {
+    }
 
     /**
      * Returns the cardinality of the set identified by key.
@@ -1022,8 +843,9 @@ class RedisLC extends ClientStatic
      * $redis->scard('keyX');           // 0
      * </pre>
      */
-    public function scard( $key ) {}
-
+    public function scard($key)
+    {
+    }
 
     /**
      * Removes and returns a random element from the set value at Key.
@@ -1041,8 +863,9 @@ class RedisLC extends ClientStatic
      * $redis->spop('key1');            // 'set3', 'key1' => {'set2'}
      * </pre>
      */
-    public function spop( $key ) {}
-
+    public function spop($key)
+    {
+    }
 
     /**
      * Returns a random element from the set value at Key, without removing it.
@@ -1060,7 +883,9 @@ class RedisLC extends ClientStatic
      * $redis->srandmember('key1');     // 'set3', 'key1' => {'set3', 'set1', 'set2'}
      * </pre>
      */
-    public function srandmember( $key ) {}
+    public function srandmember($key)
+    {
+    }
 
     /**
      * Returns the members of a set resulting from the intersection of all the sets
@@ -1096,7 +921,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function sinter( $key1, $key2, $keyN = null ) {}
+    public function sinter($key1, $key2, $keyN = null)
+    {
+    }
 
     /**
      * Performs a sinter command and stores the result in a new set.
@@ -1133,7 +960,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function sinterstore( $dstKey, $key1, $key2, $keyN = null ) {}
+    public function sinterstore($dstKey, $key1, $key2, $keyN = null)
+    {
+    }
 
     /**
      * Performs the union between N sets and returns it.
@@ -1168,7 +997,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function sunion( $key1, $key2, $keyN = null ) {}
+    public function sunion($key1, $key2, $keyN = null)
+    {
+    }
 
     /**
      * Performs the same action as sunion, but stores the result in the first key
@@ -1206,7 +1037,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function sunionstore( $dstKey, $key1, $key2, $keyN = null ) {}
+    public function sunionstore($dstKey, $key1, $key2, $keyN = null)
+    {
+    }
 
     /**
      * Performs the difference between N sets and returns it.
@@ -1238,7 +1071,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function sdiff( $key1, $key2, $keyN = null ) {}
+    public function sdiff($key1, $key2, $keyN = null)
+    {
+    }
 
     /**
      * Performs the same action as sdiff, but stores the result in the first key
@@ -1273,7 +1108,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function sdiffstore( $dstKey, $key1, $key2, $keyN = null ) {}
+    public function sdiffstore($dstKey, $key1, $key2, $keyN = null)
+    {
+    }
 
     /**
      * Returns the contents of a set.
@@ -1301,14 +1138,9 @@ class RedisLC extends ClientStatic
      * // The order is random and corresponds to redis' own internal representation of the set structure.
      * </pre>
      */
-    public function smembers( $key ) {}
-
-    /**
-     * @see smembers()
-     * @param   string  $key
-     * @link    http://redis.io/commands/smembers
-     */
-    public function sgetmembers( $key ) {}
+    public function smembers($key)
+    {
+    }
 
     /**
      * Sets a value and returns the previous entry at that key.
@@ -1324,7 +1156,9 @@ class RedisLC extends ClientStatic
      * $newValue = $redis->get('x')'            // return 'lol'
      * </pre>
      */
-    public function getset( $key, $value ) {}
+    public function getset($key, $value)
+    {
+    }
 
     /**
      * Returns a random key.
@@ -1337,8 +1171,9 @@ class RedisLC extends ClientStatic
      * $surprise = $redis->get($key);  // who knows what's in there.
      * </pre>
      */
-    public function randomkey( ) {}
-
+    public function randomkey()
+    {
+    }
 
     /**
      * Switches to a given database.
@@ -1355,7 +1190,9 @@ class RedisLC extends ClientStatic
      * $redis->get('x');        // will return 42
      * </pre>
      */
-    public function select( $dbindex ) {}
+    public function select($dbindex)
+    {
+    }
 
     /**
      * Moves a key to a different database.
@@ -1373,7 +1210,9 @@ class RedisLC extends ClientStatic
      * $redis->get('x');        // will return 42
      * </pre>
      */
-    public function move( $key, $dbindex ) {}
+    public function move($key, $dbindex)
+    {
+    }
 
     /**
      * Renames a key.
@@ -1390,15 +1229,9 @@ class RedisLC extends ClientStatic
      * $redis->get('x');   // → `FALSE`
      * </pre>
      */
-    public function rename( $srcKey, $dstKey ) {}
-
-    /**
-     * @see rename()
-     * @link    http://redis.io/commands/rename
-     * @param   string  $srcKey
-     * @param   string  $dstKey
-     */
-    public function renamekey( $srcKey, $dstKey ) {}
+    public function rename($srcKey, $dstKey)
+    {
+    }
 
     /**
      * Renames a key.
@@ -1418,7 +1251,9 @@ class RedisLC extends ClientStatic
      * $redis->get('x');   // → `FALSE`
      * </pre>
      */
-    public function renamenx( $srcKey, $dstKey ) {}
+    public function renamenx($srcKey, $dstKey)
+    {
+    }
 
     /**
      * Sets an expiration date (a timeout) on an item.
@@ -1435,7 +1270,9 @@ class RedisLC extends ClientStatic
      * $redis->get('x');            // will return `FALSE`, as 'x' has expired.
      * </pre>
      */
-    public function expire( $key, $ttl ) {}
+    public function expire($key, $ttl)
+    {
+    }
 
     /**
      * Sets an expiration date (a timeout in milliseconds) on an item.
@@ -1452,15 +1289,9 @@ class RedisLC extends ClientStatic
      * $redis->pttl('x');           // 11500
      * </pre>
      */
-    public function pexpire( $key, $ttl ) {}
-
-    /**
-     * @see expire()
-     * @param   string  $key
-     * @param   int     $ttl
-     * @link    http://redis.io/commands/expire
-     */
-    public function settimeout( $key, $ttl ) {}
+    public function pexpire($key, $ttl)
+    {
+    }
 
     /**
      * Sets an expiration date (a timestamp) on an item.
@@ -1478,7 +1309,9 @@ class RedisLC extends ClientStatic
      * $redis->get('x');                // will return `FALSE`, as 'x' has expired.
      * </pre>
      */
-    public function expireat( $key, $timestamp ) {}
+    public function expireat($key, $timestamp)
+    {
+    }
 
     /**
      * Sets an expiration date (a timestamp) on an item. Requires a timestamp in milliseconds
@@ -1495,7 +1328,9 @@ class RedisLC extends ClientStatic
      * echo $redis->pttl('x');                      // 218270120575
      * </pre>
      */
-    public function pexpireat( $key, $timestamp ) {}
+    public function pexpireat($key, $timestamp)
+    {
+    }
 
     /**
      * Returns the keys that match a certain pattern.
@@ -1509,14 +1344,9 @@ class RedisLC extends ClientStatic
      * $keyWithUserPrefix = $redis->keys('user*');
      * </pre>
      */
-    public function keys( $pattern ) {}
-
-    /**
-     * @see keys()
-     * @param   string  $pattern
-     * @link    http://redis.io/commands/keys
-     */
-    public function getkeys( $pattern ) {}
+    public function keys($pattern)
+    {
+    }
 
     /**
      * Returns the current database's size.
@@ -1529,7 +1359,9 @@ class RedisLC extends ClientStatic
      * echo "Redis has $count keys\n";
      * </pre>
      */
-    public function dbsize( ) {}
+    public function dbsize()
+    {
+    }
 
     /**
      * Authenticate the connection using a password.
@@ -1540,7 +1372,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/auth
      * @example $redis->auth('foobared');
      */
-    public function auth( $password ) {}
+    public function auth($password)
+    {
+    }
 
     /**
      * Starts the background rewrite of AOF (Append-Only File)
@@ -1549,7 +1383,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/bgrewriteaof
      * @example $redis->bgrewriteaof();
      */
-    public function bgrewriteaof( ) {}
+    public function bgrewriteaof()
+    {
+    }
 
     /**
      * Changes the slave status
@@ -1566,7 +1402,9 @@ class RedisLC extends ClientStatic
      * $redis->slaveof();
      * </pre>
      */
-    public function slaveof( $host = '127.0.0.1', $port = 6379 ) {}
+    public function slaveof($host = '127.0.0.1', $port = 6379)
+    {
+    }
 
     /**
      * Describes the object pointed to by a key.
@@ -1587,7 +1425,9 @@ class RedisLC extends ClientStatic
      * $redis->object("idletime", "l"); // → 400 (in seconds, with a precision of 10 seconds).
      * </pre>
      */
-    public function object( $string = '', $key = '' ) {}
+    public function object($string = '', $key = '')
+    {
+    }
 
     /**
      * Performs a synchronous save.
@@ -1597,7 +1437,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/save
      * @example $redis->save();
      */
-    public function save( ) {}
+    public function save()
+    {
+    }
 
     /**
      * Performs a background save.
@@ -1607,7 +1449,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/bgsave
      * @example $redis->bgSave();
      */
-    public function bgsave( ) {}
+    public function bgsave()
+    {
+    }
 
     /**
      * Returns the timestamp of the last disk save.
@@ -1616,8 +1460,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/lastsave
      * @example $redis->lastsave();
      */
-    public function lastsave( ) {}
-
+    public function lastsave()
+    {
+    }
 
     /**
      * Returns the type of data pointed by a given key.
@@ -1636,7 +1481,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/type
      * @example $redis->type('key');
      */
-    public function type( $key ) {}
+    public function type($key)
+    {
+    }
 
     /**
      * Append specified string to the string stored in specified key.
@@ -1652,8 +1499,9 @@ class RedisLC extends ClientStatic
      * $redis->get('key');              // 'value1value2'
      * </pre>
      */
-    public function append( $key, $value ) {}
-
+    public function append($key, $value)
+    {
+    }
 
     /**
      * Return a substring of a larger string
@@ -1670,7 +1518,9 @@ class RedisLC extends ClientStatic
      * $redis->getrange('key', -5, -1); // 'value'
      * </pre>
      */
-    public function getrange( $key, $start, $end ) {}
+    public function getrange($key, $start, $end)
+    {
+    }
 
     /**
      * Return a substring of a larger string
@@ -1680,8 +1530,9 @@ class RedisLC extends ClientStatic
      * @param   int     $start
      * @param   int     $end
      */
-    public function substr( $key, $start, $end ) {}
-
+    public function substr($key, $start, $end)
+    {
+    }
 
     /**
      * Changes a substring of a larger string.
@@ -1698,7 +1549,9 @@ class RedisLC extends ClientStatic
      * $redis->get('key');                  // "Hello redis"
      * </pre>
      */
-    public function setrange( $key, $offset, $value ) {}
+    public function setrange($key, $offset, $value)
+    {
+    }
 
     /**
      * Get the length of a string value.
@@ -1712,7 +1565,9 @@ class RedisLC extends ClientStatic
      * $redis->strlen('key'); // 5
      * </pre>
      */
-    public function strlen( $key ) {}
+    public function strlen($key)
+    {
+    }
 
     /**
      * Return a single bit out of a larger string
@@ -1728,7 +1583,9 @@ class RedisLC extends ClientStatic
      * $redis->getbit('key', 1);    // 1
      * </pre>
      */
-    public function getbit( $key, $offset ) {}
+    public function getbit($key, $offset)
+    {
+    }
 
     /**
      * Changes a single bit of a string.
@@ -1746,7 +1603,9 @@ class RedisLC extends ClientStatic
      * $redis->get('key');          // chr(0x2f) = "/" = b("0010 1111")
      * </pre>
      */
-    public function setbit( $key, $offset, $value ) {}
+    public function setbit($key, $offset, $value)
+    {
+    }
 
     /**
      * Count bits in a string.
@@ -1763,7 +1622,9 @@ class RedisLC extends ClientStatic
      * var_dump( $redis->bitcount('bit', 0, 2) ); // int(11)
      * </pre>
      */
-    public function bitcount( $key ) {}
+    public function bitcount($key)
+    {
+    }
 
     /**
      * Bitwise operation on multiple keys.
@@ -1785,7 +1646,9 @@ class RedisLC extends ClientStatic
      * $redis->bitop('XOR', 'bit', 'bit1', 'bit2'); // bit = 11
      * </pre>
      */
-    public function bitop( $operation, $retKey, $key1, $key2, $key3 = null ) {}
+    public function bitop($operation, $retKey, $key1, $key2, $key3 = null)
+    {
+    }
 
     /**
      * Removes all entries from the current database.
@@ -1794,7 +1657,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/flushdb
      * @example $redis->flushdb();
      */
-    public function flushdb( ) {}
+    public function flushdb()
+    {
+    }
 
     /**
      * Removes all entries from all databases.
@@ -1803,7 +1668,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/flushall
      * @example $redis->flushall();
      */
-    public function flushall( ) {}
+    public function flushall()
+    {
+    }
 
     /**
      * Sort
@@ -1833,8 +1700,9 @@ class RedisLC extends ClientStatic
      * var_dump($redis->sort('s', array('sort' => 'desc', 'store' => 'out'))); // (int)5
      * </pre>
      */
-    public function sort( $key, $option = null ) {}
-
+    public function sort($key, $option = null)
+    {
+    }
 
     /**
      * Returns an associative array of strings and integers
@@ -1896,22 +1764,9 @@ class RedisLC extends ClientStatic
      * $redis->info("CPU"); // just CPU information from Redis INFO
      * </pre>
      */
-    public function info( $option = null ) {}
-
-    /**
-     * Resets the statistics reported by Redis using the INFO command (`info()` function).
-     * These are the counters that are reset:
-     *      - Keyspace hits
-     *      - Keyspace misses
-     *      - Number of commands processed
-     *      - Number of connections received
-     *      - Number of expired keys
-     *
-     * @return bool: `TRUE` in case of success, `FALSE` in case of failure.
-     * @example $redis->resetstat();
-     * @link http://redis.io/commands/config-resetstat
-     */
-    public function resetstat( ) {}
+    public function info($option = null)
+    {
+    }
 
     /**
      * Returns the time to live left for a given key, in seconds. If the key doesn't exist, FALSE is returned.
@@ -1921,7 +1776,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/ttl
      * @example $redis->ttl('key');
      */
-    public function ttl( $key ) {}
+    public function ttl($key)
+    {
+    }
 
     /**
      * Returns a time to live left for a given key, in milliseconds.
@@ -1933,7 +1790,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/pttl
      * @example $redis->pttl('key');
      */
-    public function pttl( $key ) {}
+    public function pttl($key)
+    {
+    }
 
     /**
      * Remove the expiration timer from a key.
@@ -1943,7 +1802,9 @@ class RedisLC extends ClientStatic
      * @link    http://redis.io/commands/persist
      * @example $redis->persist('key');
      */
-    public function persist( $key ) {}
+    public function persist($key)
+    {
+    }
 
     /**
      * Sets multiple key-value pairs in one atomic command.
@@ -1962,8 +1823,9 @@ class RedisLC extends ClientStatic
      * // string(6) "value1"
      * </pre>
      */
-    public function mset( array $array ) {}
-
+    public function mset(array $array)
+    {
+    }
 
     /**
      * Returns the values of all specified keys.
@@ -1993,7 +1855,9 @@ class RedisLC extends ClientStatic
      * // }
      * </pre>
      */
-    public function mget( array $array ) {}
+    public function mget(array $array)
+    {
+    }
 
     /**
      * @see mset()
@@ -2001,7 +1865,9 @@ class RedisLC extends ClientStatic
      * @return  int 1 (if the keys were set) or 0 (no key was set)
      * @link    http://redis.io/commands/msetnx
      */
-    public function msetnx( array $array ) {}
+    public function msetnx(array $array)
+    {
+    }
 
     /**
      * Pops a value from the tail of a list, and pushes it to the front of another list.
@@ -2043,7 +1909,9 @@ class RedisLC extends ClientStatic
      * //}
      * </pre>
      */
-    public function rpoplpush( $srcKey, $dstKey ) {}
+    public function rpoplpush($srcKey, $dstKey)
+    {
+    }
 
     /**
      * A blocking version of rpoplpush, with an integral timeout in the third parameter.
@@ -2054,7 +1922,9 @@ class RedisLC extends ClientStatic
      * @return  string  The element that was moved in case of success, FALSE in case of timeout.
      * @link    http://redis.io/commands/brpoplpush
      */
-    public function brpoplpush( $srcKey, $dstKey, $timeout ) {}
+    public function brpoplpush($srcKey, $dstKey, $timeout)
+    {
+    }
 
     /**
      * Adds the specified member with a given score to the sorted set stored at key.
@@ -2082,7 +1952,9 @@ class RedisLC extends ClientStatic
      * </pre>
      * </pre>
      */
-    public function zadd( $key, $score1, $value1, $score2 = null, $value2 = null, $scoreN = null, $valueN = null ) {}
+    public function zadd($key, $score1, $value1, $score2 = null, $value2 = null, $scoreN = null, $valueN = null)
+    {
+    }
 
     /**
      * Returns a range of elements from the ordered set stored at the specified key,
@@ -2108,7 +1980,9 @@ class RedisLC extends ClientStatic
      * $redis->zrange('key1', 0, -1, true); // array('val0' => 0, 'val2' => 2, 'val10' => 10)
      * </pre>
      */
-    public function zrange( $key, $start, $end, $withscores = null ) {}
+    public function zrange($key, $start, $end, $withscores = null)
+    {
+    }
 
     /**
      * Deletes a specified member from the ordered set.
@@ -2131,18 +2005,9 @@ class RedisLC extends ClientStatic
      * // }
      * </pre>
      */
-    public function zrem( $key, $member1, $member2 = null, $memberN = null ) {}
-
-    /**
-     * @see zrem()
-     * @param   string  $key
-     * @param   string  $member1
-     * @param   string  $member2
-     * @param   string  $memberN
-     * @return  int     Number of deleted values
-     * @link    http://redis.io/commands/zrem
-     */
-    public function zdelete( $key, $member1, $member2 = null, $memberN = null ) {}
+    public function zrem($key, $member1, $member2 = null, $memberN = null)
+    {
+    }
 
     /**
      * Returns the elements of the sorted set stored at the specified key in the range [start, end]
@@ -2169,7 +2034,9 @@ class RedisLC extends ClientStatic
      * $redis->zrevrange('key', 0, -1, true); // array('val10' => 10, 'val2' => 2, 'val0' => 0)
      * </pre>
      */
-    public function zrevrange( $key, $start, $end, $withscore = null ) {}
+    public function zrevrange($key, $start, $end, $withscore = null)
+    {
+    }
 
     /**
      * Returns the elements of the sorted set stored at the specified key which have scores in the
@@ -2198,7 +2065,9 @@ class RedisLC extends ClientStatic
      * $redis->zrangebyscore('key', 0, 3, array('withscores' => TRUE, 'limit' => array(1, 1));  // array('val2' => 2)
      * </pre>
      */
-    public function zrangebyscore( $key, $start, $end, array $options = array() ) {}
+    public function zrangebyscore($key, $start, $end, array $options = array())
+    {
+    }
 
     /**
      * @see zrangebyscore()
@@ -2209,7 +2078,9 @@ class RedisLC extends ClientStatic
 	 *
 	 * @return 	array
      */
-    public function zrevrangebyscore( $key, $start, $end, array $options = array() ) {}
+    public function zrevrangebyscore($key, $start, $end, array $options = array())
+    {
+    }
 
     /**
      * Returns the number of elements of the sorted set stored at the specified key which have
@@ -2229,7 +2100,9 @@ class RedisLC extends ClientStatic
      * $redis->zcount('key', 0, 3); // 2, corresponding to array('val0', 'val2')
      * </pre>
      */
-    public function zcount( $key, $start, $end ) {}
+    public function zcount($key, $start, $end)
+    {
+    }
 
     /**
      * Deletes the elements of the sorted set stored at the specified key which have scores in the range [start,end].
@@ -2247,15 +2120,9 @@ class RedisLC extends ClientStatic
      * $redis->zremrangebyscore('key', 0, 3); // 2
      * </pre>
      */
-    public function zremrangebyscore( $key, $start, $end ) {}
-
-    /**
-     * @see zremrangebyscore()
-     * @param string    $key
-     * @param float     $start
-     * @param float     $end
-     */
-    public function zdeleterangebyscore( $key, $start, $end ) {}
+    public function zremrangebyscore($key, $start, $end)
+    {
+    }
 
     /**
      * Deletes the elements of the sorted set stored at the specified key which have rank in the range [start,end].
@@ -2274,16 +2141,9 @@ class RedisLC extends ClientStatic
      * $redis->zrange('key', 0, -1, array('withscores' => TRUE)); // array('three' => 3)
      * </pre>
      */
-    public function zremrangebyrank( $key, $start, $end ) {}
-
-    /**
-     * @see zremrangebyrank()
-     * @param   string  $key
-     * @param   int     $start
-     * @param   int     $end
-     * @link    http://redis.io/commands/zremrangebyscore
-     */
-    public function zdeleterangebyrank( $key, $start, $end ) {}
+    public function zremrangebyrank($key, $start, $end)
+    {
+    }
 
     /**
      * Returns the cardinality of an ordered set.
@@ -2299,13 +2159,9 @@ class RedisLC extends ClientStatic
      * $redis->zcard('key');            // 3
      * </pre>
      */
-    public function zcard( $key ) {}
-
-    /**
-     * @see zcard()
-     * @param string $key
-     */
-    public function zsize( $key ) {}
+    public function zcard($key)
+    {
+    }
 
     /**
      * Returns the score of a given member in the specified sorted set.
@@ -2320,7 +2176,9 @@ class RedisLC extends ClientStatic
      * $redis->zscore('key', 'val2'); // 2.5
      * </pre>
      */
-    public function zscore( $key, $member ) {}
+    public function zscore($key, $member)
+    {
+    }
 
     /**
      * Returns the rank of a given member in the specified sorted set, starting at 0 for the item
@@ -2341,7 +2199,9 @@ class RedisLC extends ClientStatic
      * $redis->zrevrank('key', 'two');  // 0
      * </pre>
      */
-    public function zrank( $key, $member ) {}
+    public function zrank($key, $member)
+    {
+    }
 
     /**
      * @see zrank()
@@ -2350,7 +2210,9 @@ class RedisLC extends ClientStatic
      * @return int    the item's score
      * @link   http://redis.io/commands/zrevrank
      */
-    public function zrevrank( $key, $member ) {}
+    public function zrevrank($key, $member)
+    {
+    }
 
     /**
      * Increments the score of a member from a sorted set by a given amount.
@@ -2368,7 +2230,9 @@ class RedisLC extends ClientStatic
      * $redis->zincrby('key', 1, 'member1');    // 3.5
      * </pre>
      */
-    public function zincrby( $key, $value, $member ) {}
+    public function zincrby($key, $value, $member)
+    {
+    }
 
     /**
      * Creates an union of sorted sets given in second argument.
@@ -2407,7 +2271,9 @@ class RedisLC extends ClientStatic
      * $redis->zunionstore('ko3', array('k1', 'k2'), array(5, 1)); // 4, 'ko3' => array('val0', 'val2', 'val3', 'val1')
      * </pre>
      */
-    public function zunionstore($Output, $ZSetKeys, array $Weights = null, $aggregateFunction = 'SUM') {}
+    public function zunionstore($Output, $ZSetKeys, array $Weights = null, $aggregateFunction = 'SUM')
+    {
+    }
 
     /**
      * Creates an intersection of sorted sets given in second argument.
@@ -2450,7 +2316,9 @@ class RedisLC extends ClientStatic
      * $redis->zinterstore('ko4', array('k1', 'k2'), array(1, 5), 'max'); // 2, 'ko4' => array('val3', 'val1')
      * </pre>
      */
-    public function zinterstore($Output, $ZSetKeys, array $Weights = null, $aggregateFunction = 'SUM') {}
+    public function zinterstore($Output, $ZSetKeys, array $Weights = null, $aggregateFunction = 'SUM')
+    {
+    }
 
     /**
      * Adds a value to the hash stored at key. If this value is already in the hash, FALSE is returned.
@@ -2472,7 +2340,9 @@ class RedisLC extends ClientStatic
      * $redis->hget('h', 'key1');           // returns "plop"
      * </pre>
      */
-    public function hset( $key, $hashKey, $value ) {}
+    public function hset($key, $hashKey, $value)
+    {
+    }
 
     /**
      * Adds a value to the hash stored at key only if this field isn't already in the hash.
@@ -2490,7 +2360,9 @@ class RedisLC extends ClientStatic
      * wasn't replaced.
      * </pre>
      */
-    public function hsetnx( $key, $hashKey, $value ) {}
+    public function hsetnx($key, $hashKey, $value)
+    {
+    }
 
     /**
      * Gets a value from the hash stored at key.
@@ -2501,7 +2373,9 @@ class RedisLC extends ClientStatic
      * @return  string  The value, if the command executed successfully BOOL FALSE in case of failure
      * @link    http://redis.io/commands/hget
      */
-    public function hget($key, $hashKey) {}
+    public function hget($key, $hashKey)
+    {
+    }
 
     /**
      * Returns the length of a hash, in number of items
@@ -2517,7 +2391,9 @@ class RedisLC extends ClientStatic
      * $redis->hlen('h'); // returns 2
      * </pre>
      */
-    public function hlen( $key ) {}
+    public function hlen($key)
+    {
+    }
 
     /**
      * Removes a values from the hash stored at key.
@@ -2549,7 +2425,9 @@ class RedisLC extends ClientStatic
      * //  }
      * </pre>
      */
-    public function hdel( $key, $hashKey1, $hashKey2 = null, $hashKeyN = null ) {}
+    public function hdel($key, $hashKey1, $hashKey2 = null, $hashKeyN = null)
+    {
+    }
 
     /**
      * Returns the keys in a hash, as an array of strings.
@@ -2580,7 +2458,9 @@ class RedisLC extends ClientStatic
      * // The order is random and corresponds to redis' own internal representation of the set structure.
      * </pre>
      */
-    public function hkeys( $key ) {}
+    public function hkeys($key)
+    {
+    }
 
     /**
      * Returns the values in a hash, as an array of strings.
@@ -2611,7 +2491,9 @@ class RedisLC extends ClientStatic
      * // The order is random and corresponds to redis' own internal representation of the set structure.
      * </pre>
      */
-    public function hvals( $key ) {}
+    public function hvals($key)
+    {
+    }
 
     /**
      * Returns the whole hash, as an array of strings indexed by strings.
@@ -2642,7 +2524,9 @@ class RedisLC extends ClientStatic
      * // The order is random and corresponds to redis' own internal representation of the set structure.
      * </pre>
      */
-    public function hgetall( $key ) {}
+    public function hgetall($key)
+    {
+    }
 
     /**
      * Verify if the specified member exists in a key.
@@ -2658,7 +2542,9 @@ class RedisLC extends ClientStatic
      * $redis->hexists('h', 'NonExistingKey');  // FALSE
      * </pre>
      */
-    public function hexists( $key, $hashKey ) {}
+    public function hexists($key, $hashKey)
+    {
+    }
 
     /**
      * Increments the value of a member from a hash by a given amount.
@@ -2675,7 +2561,9 @@ class RedisLC extends ClientStatic
      * $redis->hincrby('h', 'x', 1); // h[x] ← 2 + 1. Returns 3
      * </pre>
      */
-    public function hincrby( $key, $hashKey, $value ) {}
+    public function hincrby($key, $hashKey, $value)
+    {
+    }
 
     /**
      * Increment the float value of a hash field by the given amount
@@ -2703,7 +2591,9 @@ class RedisLC extends ClientStatic
      *  }
      * </pre>
      */
-    public function hincrbyfloat( $key, $field, $increment ) {}
+    public function hincrbyfloat($key, $field, $increment)
+    {
+    }
 
     /**
      * Fills in a whole hash. Non-string values are converted to string, using the standard (string) cast.
@@ -2720,7 +2610,9 @@ class RedisLC extends ClientStatic
      * $redis->hincrby('user:1', 'salary', 100); // Joe earns 100 more now.
      * </pre>
      */
-    public function hmset( $key, $hashkeys ) {}
+    public function hmset($key, $hashkeys)
+    {
+    }
 
     /**
      * Retirieve the values associated to the specified fields in the hash.
@@ -2738,7 +2630,9 @@ class RedisLC extends ClientStatic
      * $redis->hmGet('h', array('field1', 'field2')); // returns array('field1' => 'value1', 'field2' => 'value2')
      * </pre>
      */
-    public function hmget( $key, $hashkeys ) {}
+    public function hmget($key, $hashkeys)
+    {
+    }
 
     /**
      * Get or Set the redis config keys.
@@ -2755,15 +2649,9 @@ class RedisLC extends ClientStatic
      * $redis->config("SET", "dir", "/var/run/redis/dumps/");
      * </pre>
      */
-    public function config( $operation, $key, $value ) {}
-
-    /**
-     * @see eval()
-     * @param string $script
-     * @param array  $args
-     * @param int    $numKeys
-     */
-    public function evaluate( $script, $args = array(), $numKeys = 0 ) {}
+    public function config($operation, $key, $value)
+    {
+    }
 
     /**
      * Evaluate a LUA script serverside, from the SHA1 hash of the script instead of the script itself.
@@ -2782,15 +2670,9 @@ class RedisLC extends ClientStatic
      * $redis->evalsha($sha); // Returns 1
      * </pre>
      */
-    public function evalsha( $scriptSha, $args = array(), $numKeys = 0 ) {}
-
-    /**
-     * @see evalsha()
-     * @param string $scriptSha
-     * @param array  $args
-     * @param int    $numKeys
-     */
-    public function evaluatesha( $scriptSha, $args = array(), $numKeys = 0 ) {}
+    public function evalsha($scriptSha, $args = array(), $numKeys = 0)
+    {
+    }
 
     /**
      * Execute the Redis SCRIPT command to perform various operations on the scripting subsystem.
@@ -2814,63 +2696,9 @@ class RedisLC extends ClientStatic
      * SCRIPT KILL will return true if a script was able to be killed and false if not
      * SCRIPT EXISTS will return an array with TRUE or FALSE for each passed script
      */
-    public function script( $command, $script ) {}
-
-    /**
-     * The last error message (if any)
-     * @return  string  A string with the last returned script based error message, or NULL if there is no error
-     * @example
-     * <pre>
-     * $redis->eval('this-is-not-lua');
-     * $err = $redis->getlasterror();
-     * // "ERR Error compiling script (new function): user_script:1: '=' expected near '-'"
-     * </pre>
-     */
-    public function getlasterror() {}
-
-    /**
-     * Clear the last error message
-     *
-     * @return bool true
-     * @example
-     * <pre>
-     * $redis->set('x', 'a');
-     * $redis->incr('x');
-     * $err = $redis->getlasterror();
-     * // "ERR value is not an integer or out of range"
-     * $redis->clearlasterror();
-     * $err = $redis->getlasterror();
-     * // NULL
-     * </pre>
-     */
-    public function clearlasterror() {}
-
-    /**
-     * A utility method to prefix the value with the prefix setting for phpredis.
-     * @param   $value  The value you wish to prefix
-     * @return  string  If a prefix is set up, the value now prefixed.  If there is no prefix, the value will be returned unchanged.
-     * @example
-     * <pre>
-     * $redis->setoption(Redis::OPT_PREFIX, 'my-prefix:');
-     * $redis->_prefix('my-value'); // Will return 'my-prefix:my-value'
-     * </pre>
-     */
-    public function _prefix( $value ) {}
-
-    /**
-     * A utility method to unserialize data with whatever serializer is set up.  If there is no serializer set, the
-     * value will be returned unchanged.  If there is a serializer set up, and the data passed in is malformed, an
-     * exception will be thrown. This can be useful if phpredis is serializing values, and you return something from
-     * redis in a LUA script that is serialized.
-     * @param   string  $value  The value to be unserialized
-     * @return mixed
-     * @example
-     * <pre>
-     * $redis->setoption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
-     * $redis->_unserialize('a:3:{i:0;i:1;i:1;i:2;i:2;i:3;}'); // Will return Array(1,2,3)
-     * </pre>
-     */
-    public function _unserialize( $value ) {}
+    public function script($command, $script)
+    {
+    }
 
     /**
      * Dump a key out of a redis database, the value of which can later be passed into redis using the RESTORE command.
@@ -2884,7 +2712,9 @@ class RedisLC extends ClientStatic
      * $val = $redis->dump('foo'); // $val will be the Redis encoded key value
      * </pre>
      */
-    public function dump( $key ) {}
+    public function dump($key)
+    {
+    }
 
     /**
      * Restore a key from the result of a DUMP operation.
@@ -2901,24 +2731,9 @@ class RedisLC extends ClientStatic
      * $redis->restore('bar', 0, $val); // The key 'bar', will now be equal to the key 'foo'
      * </pre>
      */
-    public function restore( $key, $ttl, $value ) {}
-
-    /**
-     * Migrates a key to a different Redis instance.
-     *
-     * @param   string  $host       The destination host
-     * @param   int     $port       The TCP port to connect to.
-     * @param   string  $key        The key to migrate.
-     * @param   int     $db         The target DB.
-     * @param   int     $timeout    The maximum amount of time given to this transfer.
-     * @return  bool
-     * @link    http://redis.io/commands/migrate
-     * @example
-     * <pre>
-     * $redis->migrate('backup', 6379, 'foo', 0, 3600);
-     * </pre>
-     */
-    public function migrate( $host, $port, $key, $db, $timeout ) {}
+    public function restore($key, $ttl, $value)
+    {
+    }
 
     /**
      * Return the current Redis server time.
@@ -2934,40 +2749,75 @@ class RedisLC extends ClientStatic
      * // }
      * </pre>
      */
-    public function time() {}
-}
+    public function time()
+    {
+    }
 
-
-
-class RedisLCArray {
     /**
-     * Constructor
+     * Set the string value in argument as value of the key, with a time to live.
+     * Psetx works exactly like setex with the sole difference that the expire time is specified in milliseconds instead
+     * of seconds.
      *
-     * @param   string  $name   Name of the redis array to create (required if using redis.ini to define array)
-     * @param   array   $hosts  Array of hosts to construct the array with
-     * @param   array   $opts   Array of options
-     * @link    https://github.com/nicolasff/phpredis/blob/master/arrays.markdown
+     * @param   string $key
+     * @param   int $ttl
+     * @param   string $value
+     * @return  bool:   TRUE if the command is successful.
+     * @link    http://redis.io/commands/psetex
+     * @example $redis->psetex('key', 3600000, 'value'); // sets key → value, with 1h TTL.
      */
-    function __construct($name = '', array $hosts = NULL, array $opts = NULL) {}
+
 
     /**
-     * @return  array   list of hosts for the selected array
+
+     * Multi
+
+    
+    const MULTI                 = '';
+
+    const PIPELINE              = '';
+
+
+
+    
+     * Type
+
      */
-    public function _hosts() {}
+
+    const REDIS_NOT_FOUND       = 0;
+
+    
+    const REDIS_SET             = 2;
+
+    const REDIS_LIST            = 3;
+
+    const REDIS_ZSET            = 4;
+
+    
+
+
+
 
     /**
-     * @return  string  the name of the function used to extract key parts during consistent hashing
+
+    
+     *
+
+     * @example $redis = new Redis();
+
      */
-    public function _function() {}
+
+    
+
 
     /**
-     * @param   string  key     The key for which you want to lookup the host
-     * @return  string  the host to be used for a certain key
-     */
-    public function _target($key) {}
 
-    /**
-     * Use this function when a new node is added and keys need to be rehashed.
-     */
-    public function _rehash() {}
+     * Connects to a Redis instance.
+
+    
+     * @param string    $host       can be a host, or the path to a unix domain socket
+
+     * @param int       $port       optional
+
+     * @param float     $timeout    value in seconds (optional, default is 0.0 meaning unlimited)
+
 }
