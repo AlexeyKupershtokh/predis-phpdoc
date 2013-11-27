@@ -2937,7 +2937,7 @@ class Redis
     public function time() {}
 }
 
-class RedisException extends Exception {}
+
 
 class RedisArray {
     /**

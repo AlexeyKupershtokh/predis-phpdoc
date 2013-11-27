@@ -7,6 +7,7 @@ $profile = new Predis\Profile\ServerVersionNext;
 // copy class by another name from ukko
 $file = file_get_contents(__DIR__ . '/../vendor/ukko/phpredis-phpdoc/src/Redis.php');
 $file = str_replace('<?php', '<?php' . PHP_EOL . 'namespace PredisPhpdoc;' . PHP_EOL, $file);
+$file = str_replace('class RedisException extends Exception {}', '', $file);
 file_put_contents(__DIR__ . '/../src/PredisPhpdoc/Redis.php', $file);
 
 new \PredisPhpdoc\Redis();
