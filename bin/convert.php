@@ -32,7 +32,7 @@ $file = str_replace("class Redis", "class RedisLC", $file);
 //$file = str_replace("class RedisLC\n", "class RedisLC extends ClientStatic\n", $file);
 file_put_contents(__DIR__ . '/../src/PredisPhpdoc/RedisLC.php', $file);
 
-// load RedisLC and copy compatible commands to Client class
+// load RedisLC and copy compatible commands to ClientDynamic class
 $class = new ReflectionClass('\PredisPhpdoc\RedisLC');
 $lines = file($class->getFileName());
 $file = <<<F
@@ -65,7 +65,7 @@ $file .= <<<F
 F;
 file_put_contents(__DIR__ . '/../src/PredisPhpdoc/ClientDynamic.php', $file);
 
-// load Filtered class in order to check for missing commands
+// load Client class in order to check for missing commands
 $class = new ReflectionClass('\PredisPhpdoc\Client');
 $methods = $class->getMethods();
 $unusedCommands = array_diff_key(
