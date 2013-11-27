@@ -7,7 +7,6 @@
         "predis/predis": "*",
         "ukko/phpredis-phpdoc": "2.2.*@dev"
     },
-    "version": "0.0.1",
     "autoload": {
         "psr-0": {
             "PredisPhpdoc": "src/"
